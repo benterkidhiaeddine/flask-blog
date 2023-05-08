@@ -4,6 +4,15 @@ from flask_login import UserMixin
 from . import db,login
 from hashlib import md5
 
+#association table for users : followers and followed
+
+followers = db.Table('followers',
+                         db.Column('follower_id',db.Integer,db.ForeignKey('user.id')),
+                         db.Column('followed_id',db.Integer,db.ForeignKey('user.id'))
+)
+
+
+
 #UserMixin has four methods necessary for the login manager : is_authenticated , is_active , is_anonymous , get_id 
 class User(UserMixin,db.Model):
     id = db.Column(db.Integer,primary_key=True)
@@ -15,6 +24,35 @@ class User(UserMixin,db.Model):
     
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime, default = datetime.utcnow)
+
+    
+    #first argument is the the other side of the relationship and the second argument is the association table
+    
+    followed = db.relationship('User',secondary=followers,
+                               primaryjoin=(followers.c.follower_id == id),
+                               secondaryjoin=(followers.c.followed_id == id),
+                               backref = db.backref('followers',lazy = 'dynamic'), lazy ='dynamic')
+
+    
+    def follow(self,user):
+        if not self.is_following(user):
+            self.followed.append(user)
+
+    def unfollow(self,user):
+        if self.is_following(user):
+            self.followed.remove(user)
+
+
+    def is_following(self,user):
+        return self.followed.filter(followers.c.followed_id == user.id).count() > 0
+    
+    def followed_posts(self):
+        
+        followed_posts = Post.query.join(
+            followers,(followers.c.followed_id == Post.user_id)).filter(
+                followers.c.follower_id == self.id)
+        own_posts = Post.query.filter_by(user_id = self.id)
+        return followed_posts.union(own_posts).order_by(Post.time_stamp.desc())   
     
     #def __repr__ for making debugging easier it give a clear representation of a database item when calling print on an db object
     def __repr__(self):
