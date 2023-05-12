@@ -16,7 +16,7 @@ def index():
     
     title = 'Home'
     user = current_user
-    posts = Post.query.all()
+    posts = current_user.followed_posts().all()
     return render_template("index.html",title = title,posts = posts, user = user)
 
 
@@ -76,10 +76,7 @@ def user_profile(username):
 
     user = User.query.filter_by( username = username).first_or_404()
     title = f'Profile : {user.username}'
-    posts = [
-        { 'author':user, 'body': 'expample post 1'},
-        { 'author': user , 'body' :'example post 2'}
-    ]
+    posts =  user.posts.all()
     return render_template('profile.html',posts = posts,title =title , user = user)
 
 
@@ -101,9 +98,28 @@ def edit_profile():
     return render_template('edit_profile.html',form = form , title = title)
 
 
+@app.route('/follow/<username>')
+def follow(username):
+    followed_user = User.query.filter_by( username = username ).first()
+
+    current_user.follow(followed_user)
+    db.session.commit()
+
+    return redirect(url_for('user_profile',username=username))
+
+@app.route('/unfollow/<username>')
+def unfollow(username):
+    followed_user = User.query.filter_by( username = username ).first()
+    current_user.unfollow(followed_user)
+    db.session.commit()
+
+    return redirect(url_for('user_profile',username=username))
+
 #defining when the user is last seen
 @app.before_request
 def set_last_seen():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
+
+
