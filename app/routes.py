@@ -5,7 +5,7 @@ from werkzeug.urls import url_parse
 from flask_login import login_user,logout_user,current_user,login_required
 from .models import User,Post
 from . import app,db
-from .forms import LoginForm,RegisterForm,EditPersonalInfoForm
+from .forms import LoginForm,RegisterForm,EditPersonalInfoForm,EmptyForm
 
 
 
@@ -72,12 +72,12 @@ def register():
 @app.route('/user/<username>')
 @login_required
 def user_profile(username):
-
+    form = EmptyForm()
 
     user = User.query.filter_by( username = username).first_or_404()
     title = f'Profile : {user.username}'
     posts =  user.posts.all()
-    return render_template('profile.html',posts = posts,title =title , user = user)
+    return render_template('profile.html',posts = posts,title =title , user = user, form = form)
 
 
 #define a route that handles that editing the persons profile info
@@ -98,22 +98,46 @@ def edit_profile():
     return render_template('edit_profile.html',form = form , title = title)
 
 
-@app.route('/follow/<username>')
+@app.route('/follow/<username>',methods = ['POST',"GET"])
+@login_required
 def follow(username):
-    followed_user = User.query.filter_by( username = username ).first()
+    form = EmptyForm()
+    if form.validate_on_submit():
+        followed_user = User.query.filter_by( username = username ).first()
+        if followed_user is None:
+            flash("This user does not exist")
+            return redirect(url_for('index'))
+        if followed_user == current_user:
+            flash("you can not follow yourself")
+            return redirect(url_for('user',username=username))
+        current_user.follow(followed_user)
+        db.session.commit()
+        flash(f"You are following {username}")
+        return redirect(url_for('user_profile',username=username))
 
-    current_user.follow(followed_user)
-    db.session.commit()
+    else:
+        redirect(url_for('index'))
 
-    return redirect(url_for('user_profile',username=username))
 
-@app.route('/unfollow/<username>')
+@app.route('/unfollow/<username>',methods = ['POST',"GET"])
+@login_required
 def unfollow(username):
-    followed_user = User.query.filter_by( username = username ).first()
-    current_user.unfollow(followed_user)
-    db.session.commit()
+    form = EmptyForm()
+    if form.validate_on_submit():
+        followed_user = User.query.filter_by( username = username ).first()
+        if followed_user is None:
+            flash("This user does not exist")
+            return redirect(url_for('index'))
+        if followed_user == current_user:
+            flash("you can not unfollow yourself")
+            return redirect(url_for('user',username=username))
+        current_user.unfollow(followed_user)
+        db.session.commit()
+        flash(f"You are now not following {username}")
+        return redirect(url_for('user_profile',username=username))
 
-    return redirect(url_for('user_profile',username=username))
+    else:
+        redirect(url_for('index'))
 
 #defining when the user is last seen
 @app.before_request

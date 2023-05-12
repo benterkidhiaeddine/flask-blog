@@ -45,3 +45,7 @@ class EditPersonalInfoForm(FlaskForm):
             user = User.query.filter_by(username = given_username.data).first()
             if user is not None:
                 raise ValidationError('Please use a different username.')
+
+
+class EmptyForm(FlaskForm):
+    submit = SubmitField('Submit')
