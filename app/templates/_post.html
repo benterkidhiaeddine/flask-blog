@@ -1,8 +1,18 @@
 <table>
-    <tr valign="top">
-        <td><img src="{{post.author.avatar(36)}}" alt=""></td>
-        <p><a href="{{ url_for('user_profile',username = post.author.username)}}">{{ post.author.username }} Profile</a></p>
-        <td><p>{{post.author.username}} says: <br> {{post.body}}</p></td>
-    </tr>
+  <tr valign="top">
+    <td><img src="{{post.author.avatar(36)}}" alt="" /></td>
+    <p>
+      <a href="{{ url_for('user_profile',username = post.author.username)}}"
+        >{{ post.author.username }}
+      </a>
+    </p>
+    <td>
+      <p>
+        {{post.author.username}} says: <br />
+        {{post.body}}
+      </p>
+    </td>
+  </tr>
 </table>
-<hr>
+<p><small> {{ post.time_stamp }}</small></p>
+<hr />

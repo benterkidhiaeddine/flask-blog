@@ -1,17 +1,38 @@
-
-{% extends "layout.html" %}
-
-{% block content %} 
+{% extends "layout.html" %} {% block content %}
 <table>
   <tr valign="top">
-      <td><img src="{{ user.avatar(128) }}"></td>
-      <td><h1>User: {{ user.username }}</h1></td>
+    <td><img src="{{ user.avatar(128) }}" /></td>
+    <td><h1>User: {{ user.username }}</h1></td>
   </tr>
 </table>
-    
- <h2>Posts</h2>
- <hr>
- {% for post in posts %}
-    {% include "_post.html" %}
- {% endfor %}
+
+{% if form %}
+<form action="/index" method="post">
+  {{ form.hidden_tag() }}
+  <div>
+    <p>{{ form.body.label }}</p>
+    <p>{{ form.body(cols=32 , rows = 4) }}</p>
+    {% for error in form.body.errors %}
+    <p style="color: red">{{ error }}</p>
+    {% endfor %}
+  </div>
+
+  <div>
+    <p>{{ form.sumbit() }}</p>
+  </div>
+</form>
+{% endif %}
+
+<h2>Posts</h2>
+<hr />
+{% for post in posts %} {% include "_post.html" %} {% endfor %}
+
+<p>
+  {% if prev_url %}
+  <a href="{{prev_url}}">Newer posts</a>
+  {% endif %} {% if next_url %}
+  <a href="{{next_url}}">Older posts</a>
+  {% endif %}
+</p>
+
 {% endblock %}
